@@ -8,143 +8,156 @@
 <style>
 
 body{
-    margin:0;
-    background:#1f2125;
-    color:white;
-    font-family:Arial;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    min-height:100vh;
+margin:0;
+background:#1f2125;
+font-family:Arial;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+min-height:100vh;
+color:white;
+overflow:hidden;
 }
 
 #menu{
-    width:95%;
-    max-width:420px;
-    background:#2b2d31;
-    padding:20px;
-    border-radius:12px;
-    text-align:center;
-}
-
-button{
-    border:none;
-    padding:12px;
-    border-radius:8px;
-    margin-top:10px;
-    cursor:pointer;
-    font-weight:bold;
+width:95%;
+max-width:420px;
+background:#2b2d31;
+padding:20px;
+border-radius:12px;
+text-align:center;
 }
 
 input{
-    width:90%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    margin-top:10px;
+width:90%;
+padding:12px;
+border:none;
+border-radius:8px;
+margin-top:10px;
+font-size:16px;
+}
+
+button{
+border:none;
+padding:12px;
+border-radius:8px;
+margin-top:10px;
+cursor:pointer;
+font-weight:bold;
 }
 
 #createBtn{
-    width:100%;
-    background:#2ecc71;
-    color:white;
+background:#2ecc71;
+color:white;
+width:100%;
 }
 
 #joinBtn{
-    width:100%;
-    background:#3498db;
-    color:white;
+background:#3498db;
+color:white;
+width:100%;
 }
 
 #status{
-    margin-top:15px;
-    color:#f1c40f;
+margin-top:15px;
+color:#f1c40f;
 }
 
 #boardContainer{
-    display:none;
-    margin-top:10px;
-    position:relative;
+display:none;
+margin-top:10px;
+position:relative;
 }
 
 #board{
-    position:relative;
-    width:540px;
-    height:600px;
-    background:#f5deb3;
-    border:4px solid #8b4513;
+position:relative;
+width:540px;
+height:600px;
+background:#f5deb3;
+border:4px solid #8b4513;
+box-shadow:0 0 20px rgba(0,0,0,0.5);
 }
 
 .line{
-    position:absolute;
-    background:#000;
-}
-
-.piece{
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    position:absolute;
-    background:#f9d976;
-    border:2px solid #8b4513;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:28px;
-    font-weight:bold;
-    cursor:pointer;
-    user-select:none;
-    z-index:5;
-    transition:0.15s;
-}
-
-.red{
-    color:#d63031;
-}
-
-.black{
-    color:#111;
-}
-
-.selected{
-    box-shadow:0 0 15px #00ff00;
-    transform:scale(1.08);
+position:absolute;
+background:#000;
 }
 
 #river{
-    position:absolute;
-    top:270px;
-    left:0;
-    width:100%;
-    height:60px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:36px;
-    color:#8b4513;
-    font-weight:bold;
-    letter-spacing:10px;
+position:absolute;
+top:270px;
+left:0;
+width:100%;
+height:60px;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:34px;
+font-weight:bold;
+color:#8b4513;
+letter-spacing:10px;
+}
+
+.piece{
+width:48px;
+height:48px;
+border-radius:50%;
+position:absolute;
+background:#f9d976;
+border:2px solid #8b4513;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:28px;
+font-weight:bold;
+cursor:pointer;
+z-index:5;
+transition:0.15s;
+user-select:none;
+}
+
+.red{
+color:#d63031;
+}
+
+.black{
+color:#111;
+}
+
+.selected{
+transform:scale(1.1);
+box-shadow:0 0 15px #00ff00;
+}
+
+.move-dot{
+position:absolute;
+width:16px;
+height:16px;
+background:#2ecc71;
+border-radius:50%;
+z-index:2;
+pointer-events:none;
 }
 
 #gameInfo{
-    display:none;
-    margin-top:15px;
-    text-align:center;
+display:none;
+margin-top:15px;
+text-align:center;
 }
 
 #turn{
-    font-size:20px;
-    margin-bottom:10px;
+font-size:20px;
+margin-bottom:10px;
 }
 
 #autoBtn{
-    background:#9b59b6;
-    color:white;
+background:#9b59b6;
+color:white;
 }
 
 #autoBtn.active{
-    background:#2ecc71;
+background:#2ecc71;
 }
 
 </style>
@@ -248,16 +261,18 @@ function drawBoard(){
 
 const boardDiv = document.getElementById("board");
 
-document.querySelectorAll(".line").forEach(e=>e.remove());
+boardDiv.innerHTML = `
+<div id="river">楚 河　　　　漢 界</div>
+`;
 
-for(let i=0;i<10;i++){
+for(let r=0;r<10;r++){
 
 let line = document.createElement("div");
 
 line.className = "line";
 
 line.style.left = "30px";
-line.style.top = (30 + i*60) + "px";
+line.style.top = (30 + r*60) + "px";
 line.style.width = "480px";
 line.style.height = "2px";
 
@@ -265,15 +280,15 @@ boardDiv.appendChild(line);
 
 }
 
-for(let i=0;i<9;i++){
+for(let c=0;c<9;c++){
 
-if(i===0 || i===8){
+if(c===0 || c===8){
 
 let line = document.createElement("div");
 
 line.className = "line";
 
-line.style.left = (30 + i*60) + "px";
+line.style.left = (30 + c*60) + "px";
 line.style.top = "30px";
 line.style.width = "2px";
 line.style.height = "540px";
@@ -282,27 +297,27 @@ boardDiv.appendChild(line);
 
 }else{
 
-let topLine = document.createElement("div");
+let top = document.createElement("div");
 
-topLine.className = "line";
+top.className = "line";
 
-topLine.style.left = (30 + i*60) + "px";
-topLine.style.top = "30px";
-topLine.style.width = "2px";
-topLine.style.height = "240px";
+top.style.left = (30 + c*60) + "px";
+top.style.top = "30px";
+top.style.width = "2px";
+top.style.height = "240px";
 
-boardDiv.appendChild(topLine);
+boardDiv.appendChild(top);
 
-let bottomLine = document.createElement("div");
+let bottom = document.createElement("div");
 
-bottomLine.className = "line";
+bottom.className = "line";
 
-bottomLine.style.left = (30 + i*60) + "px";
-bottomLine.style.top = "330px";
-bottomLine.style.width = "2px";
-bottomLine.style.height = "240px";
+bottom.style.left = (30 + c*60) + "px";
+bottom.style.top = "330px";
+bottom.style.width = "2px";
+bottom.style.height = "240px";
 
-boardDiv.appendChild(bottomLine);
+boardDiv.appendChild(bottom);
 
 }
 
@@ -311,30 +326,60 @@ boardDiv.appendChild(bottomLine);
 drawPalace(3,0);
 drawPalace(3,7);
 
+for(let r=0;r<10;r++){
+
+for(let c=0;c<9;c++){
+
+let point = document.createElement("div");
+
+point.style.position = "absolute";
+
+point.style.left =
+(30 + c*60 - 25) + "px";
+
+point.style.top =
+(30 + r*60 - 25) + "px";
+
+point.style.width = "50px";
+point.style.height = "50px";
+
+point.style.zIndex = "1";
+
+point.style.cursor = "pointer";
+
+point.onclick = ()=>clickCell(r,c);
+
+boardDiv.appendChild(point);
+
+}
+
+}
+
 }
 
 function drawPalace(col,row){
 
 const boardDiv = document.getElementById("board");
 
-function addDiagonal(x1,y1,x2,y2){
+function diagonal(x1,y1,x2,y2){
 
 let line = document.createElement("div");
 
 line.className = "line";
 
-let length = Math.sqrt(
-Math.pow(x2-x1,2) +
+let len = Math.sqrt(
+Math.pow(x2-x1,2)+
 Math.pow(y2-y1,2)
 );
 
-line.style.width = length + "px";
+line.style.width = len + "px";
 line.style.height = "2px";
 
 line.style.left = x1 + "px";
 line.style.top = y1 + "px";
 
-let angle = Math.atan2(
+let angle =
+Math.atan2(
 y2-y1,
 x2-x1
 ) * 180 / Math.PI;
@@ -348,14 +393,14 @@ boardDiv.appendChild(line);
 
 }
 
-addDiagonal(
+diagonal(
 30 + col*60,
 30 + row*60,
 30 + (col+2)*60,
 30 + (row+2)*60
 );
 
-addDiagonal(
+diagonal(
 30 + (col+2)*60,
 30 + row*60,
 30 + col*60,
@@ -367,6 +412,9 @@ addDiagonal(
 function renderPieces(){
 
 document.querySelectorAll(".piece")
+.forEach(e=>e.remove());
+
+document.querySelectorAll(".move-dot")
 .forEach(e=>e.remove());
 
 const boardDiv =
@@ -413,9 +461,51 @@ div.style.left =
 div.style.top =
 (30 + r*60 - 24) + "px";
 
-div.onclick = ()=>clickPiece(r,c);
+div.onclick = (e)=>{
+
+e.stopPropagation();
+
+clickPiece(r,c);
+
+};
 
 boardDiv.appendChild(div);
+
+}
+
+}
+
+}
+
+if(selected){
+
+for(let r=0;r<10;r++){
+
+for(let c=0;c<9;c++){
+
+if(
+isValidMove(
+selected.r,
+selected.c,
+r,
+c
+)
+){
+
+let dot =
+document.createElement("div");
+
+dot.className = "move-dot";
+
+dot.style.left =
+(30 + c*60 - 8) + "px";
+
+dot.style.top =
+(30 + r*60 - 8) + "px";
+
+boardDiv.appendChild(dot);
+
+}
 
 }
 
@@ -433,12 +523,14 @@ const piece = board[r][c];
 
 if(selected){
 
-if(isValidMove(
+if(
+isValidMove(
 selected.r,
 selected.c,
 r,
 c
-)){
+)
+){
 
 movePiece(
 selected.r,
@@ -463,9 +555,19 @@ aiMove();
 
 return;
 
-}else{
+}
 
-selected = null;
+}
+
+if(piece){
+
+if(
+(turn==="red" && piece===piece.toUpperCase()) ||
+
+(turn==="black" && piece===piece.toLowerCase())
+){
+
+selected = {r,c};
 
 renderPieces();
 
@@ -473,21 +575,45 @@ renderPieces();
 
 }
 
-if(piece){
-
-if(turn==="red" &&
-piece===piece.toUpperCase()){
-
-selected = {r,c};
-
 }
 
-if(turn==="black" &&
-piece===piece.toLowerCase()){
+function clickCell(r,c){
 
-selected = {r,c};
+if(!selected) return;
 
-}
+if(
+isValidMove(
+selected.r,
+selected.c,
+r,
+c
+)
+){
+
+movePiece(
+selected.r,
+selected.c,
+r,
+c
+);
+
+selected = null;
+
+renderPieces();
+
+syncGame();
+
+switchTurn();
+
+checkWinner();
+
+setTimeout(()=>{
+aiMove();
+},200);
+
+}else{
+
+selected = null;
 
 renderPieces();
 
@@ -547,12 +673,46 @@ isMyTurn()
 
 }
 
+function clearPath(sr,sc,tr,tc){
+
+let count = 0;
+
+if(sr===tr){
+
+let step = tc>sc ? 1 : -1;
+
+for(let c=sc+step;c!==tc;c+=step){
+
+if(board[sr][c]!=="")
+count++;
+
+}
+
+}else{
+
+let step = tr>sr ? 1 : -1;
+
+for(let r=sr+step;r!==tr;r+=step){
+
+if(board[r][sc]!=="")
+count++;
+
+}
+
+}
+
+return count;
+
+}
+
 function isValidMove(sr,sc,tr,tc){
 
 if(!isInside(tr,tc))
 return false;
 
 const piece = board[sr][sc];
+
+if(!piece) return false;
 
 const target = board[tr][tc];
 
@@ -573,47 +733,125 @@ case "r":
 if(sr!==tr && sc!==tc)
 return false;
 
-if(sr===tr){
-
-let step = dc>0 ? 1 : -1;
-
-for(let c=sc+step;c!==tc;c+=step){
-
-if(board[sr][c]!=="")
-return false;
-
-}
-
-}else{
-
-let step = dr>0 ? 1 : -1;
-
-for(let r=sr+step;r!==tr;r+=step){
-
-if(board[r][sc]!=="")
-return false;
-
-}
-
-}
-
-return true;
+return clearPath(sr,sc,tr,tc)===0;
 
 case "h":
 
 if(
-(Math.abs(dr)===2 &&
-Math.abs(dc)===1) ||
-
-(Math.abs(dr)===1 &&
-Math.abs(dc)===2)
+Math.abs(dr)===2 &&
+Math.abs(dc)===1
 ){
+
+let leg =
+sr + dr/2;
+
+if(board[leg][sc]!=="")
+return false;
+
+return true;
+
+}
+
+if(
+Math.abs(dr)===1 &&
+Math.abs(dc)===2
+){
+
+let leg =
+sc + dc/2;
+
+if(board[sr][leg]!=="")
+return false;
 
 return true;
 
 }
 
 return false;
+
+case "e":
+
+if(
+Math.abs(dr)!==2 ||
+Math.abs(dc)!==2
+)
+return false;
+
+let eyeR =
+sr + dr/2;
+
+let eyeC =
+sc + dc/2;
+
+if(board[eyeR][eyeC]!=="")
+return false;
+
+if(isRed(piece) && tr<5)
+return false;
+
+if(!isRed(piece) && tr>4)
+return false;
+
+return true;
+
+case "a":
+
+if(
+Math.abs(dr)!==1 ||
+Math.abs(dc)!==1
+)
+return false;
+
+if(isRed(piece)){
+
+return tr>=7 &&
+tc>=3 &&
+tc<=5;
+
+}else{
+
+return tr<=2 &&
+tc>=3 &&
+tc<=5;
+
+}
+
+case "k":
+
+if(Math.abs(dr)+Math.abs(dc)!==1)
+return false;
+
+if(isRed(piece)){
+
+return tr>=7 &&
+tc>=3 &&
+tc<=5;
+
+}else{
+
+return tr<=2 &&
+tc>=3 &&
+tc<=5;
+
+}
+
+case "c":
+
+if(sr!==tr && sc!==tc)
+return false;
+
+let between =
+clearPath(sr,sc,tr,tc);
+
+if(target===""){
+
+return between===0;
+
+}else{
+
+return between===1;
+
+}
 
 case "p":
 
@@ -654,104 +892,6 @@ return true;
 }
 
 return false;
-
-case "k":
-
-if(Math.abs(dr)+Math.abs(dc)!==1)
-return false;
-
-if(isRed(piece)){
-
-return tr>=7 &&
-tc>=3 &&
-tc<=5;
-
-}else{
-
-return tr<=2 &&
-tc>=3 &&
-tc<=5;
-
-}
-
-case "a":
-
-if(
-Math.abs(dr)!==1 ||
-Math.abs(dc)!==1
-)
-return false;
-
-if(isRed(piece)){
-
-return tr>=7 &&
-tc>=3 &&
-tc<=5;
-
-}else{
-
-return tr<=2 &&
-tc>=3 &&
-tc<=5;
-
-}
-
-case "e":
-
-if(
-Math.abs(dr)!==2 ||
-Math.abs(dc)!==2
-)
-return false;
-
-if(isRed(piece) && tr<5)
-return false;
-
-if(!isRed(piece) && tr>4)
-return false;
-
-return true;
-
-case "c":
-
-if(sr!==tr && sc!==tc)
-return false;
-
-let count = 0;
-
-if(sr===tr){
-
-let step = dc>0 ? 1 : -1;
-
-for(let c=sc+step;c!==tc;c+=step){
-
-if(board[sr][c]!=="")
-count++;
-
-}
-
-}else{
-
-let step = dr>0 ? 1 : -1;
-
-for(let r=sr+step;r!==tr;r+=step){
-
-if(board[r][sc]!=="")
-count++;
-
-}
-
-}
-
-if(target===""){
-
-return count===0;
-
-}else{
-
-return count===1;
-
-}
 
 }
 
@@ -843,7 +983,9 @@ for(let tr=0;tr<10;tr++){
 
 for(let tc=0;tc<9;tc++){
 
-if(isValidMove(r,c,tr,tc)){
+if(
+isValidMove(r,c,tr,tc)
+){
 
 moves.push({
 sr:r,
@@ -876,7 +1018,8 @@ let bestScore = -999999;
 
 let bestMove = null;
 
-const moves = getAllMoves(turn);
+const moves =
+getAllMoves(turn);
 
 for(let move of moves){
 
@@ -888,7 +1031,8 @@ board[move.sr][move.sc];
 
 board[move.sr][move.sc] = "";
 
-let score = evaluateBoard();
+let score =
+evaluateBoard();
 
 board[move.sr][move.sc] =
 board[move.tr][move.tc];
@@ -925,7 +1069,7 @@ switchTurn();
 
 checkWinner();
 
-},500);
+},400);
 
 }
 
