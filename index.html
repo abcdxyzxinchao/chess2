@@ -1,360 +1,667 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cờ Vua Đại Chiến Online P2P</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
-    
-    <style>
-        body {
-            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #1a1c1e; color: #fff; margin: 0; padding: 0;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; justify-content: center; box-sizing: border-box;
-        }
-        .lobby-container {
-            background: #23272a; padding: 20px; border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 90%; max-width: 400px;
-            text-align: center; margin-bottom: 20px; border: 1px solid #34495e;
-        }
-        .lobby-input {
-            width: 80%; padding: 10px; margin: 10px 0; font-size: 16px;
-            border-radius: 6px; border: none; text-align: center; font-weight: bold;
-        }
-        .lobby-btn {
-            background: #27ae60; color: white; border: none; padding: 10px 20px;
-            font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px;
-        }
-        .lobby-btn.blue { background: #2980b9; }
-        
-        /* KHU VỰC LỊCH SỬ PHÒNG MỚI THÊM */
-        .history-section {
-            margin-top: 15px; padding-top: 15px; border-top: 1px dashed #4f5d73; text-align: left;
-        }
-        .history-title { font-size: 13px; color: #f1c40f; font-weight: bold; margin-bottom: 8px; text-align: center;}
-        .history-list { list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; }
-        .history-item { 
-            display: flex; justify-content: space-between; align-items: center;
-            background: #2f3542; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 13px;
-        }
-        .history-connect-btn { background: #e67e22; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cờ Vua Online P2P</title>
 
-        .game-wrapper { position: relative; width: 480px; max-width: 94vw; aspect-ratio: 1 / 1; margin-bottom: 70px; display: none; }
-        #my-board { width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-        .bottom-trigger-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: #2b2d30;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.4); padding: 12px; box-sizing: border-box;
-            display: none; justify-content: center; z-index: 90;
-        }
-        .menu-toggle-btn { background: #3498db; color: white; border: none; width: 90%; max-width: 400px; padding: 14px; font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        .bottom-sheet-menu {
-            position: fixed; bottom: -100%; left: 0; width: 100%; max-height: 80vh;
-            background: #202224; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
-            z-index: 100; transition: bottom 0.25s ease; padding: 20px; box-sizing: border-box; overflow-y: auto;
-        }
-        .bottom-sheet-menu.open { bottom: 0; }
-        .drag-handle { width: 40px; height: 5px; background: #555; border-radius: 3px; margin: -8px auto 15px auto; }
-        .menu-section { margin-bottom: 15px; }
-        .section-title { font-size: 11px; text-transform: uppercase; color: #7f8c8d; margin-bottom: 6px; font-weight: bold; }
-        .status-container { display: flex; background: #161719; border-radius: 6px; border-left: 4px solid #3498db; padding: 10px; gap: 15px; align-items: center; justify-content: space-between; }
-        .status-text-side { flex: 1; font-size: 13px; }
-        .mini-board-side { width: 110px; height: 110px; flex-shrink: 0; border-radius: 6px; overflow: hidden; border: 2px solid #3d4145; }
-        .menu-btn { width: 100%; padding: 12px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; margin-bottom: 8px; }
-        .btn-purple { background-color: #8e44ad; }
-        .btn-purple.active { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
-        .highlight-hint::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 28%; height: 28%; background-color: rgba(46, 204, 113, 0.6); border-radius: 50%; pointer-events: none; z-index: 2; }
-        .highlight-selected { box-shadow: inset 0 0 3px 3px #f1c40f; }
-        .result-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; }
-        .result-card { background: #2c3e50; border: 3px solid #f1c40f; border-radius: 12px; width: 85%; max-width: 330px; padding: 25px; text-align: center; }
-        .result-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #f1c40f; }
-        .result-desc { font-size: 14px; color: #ecf0f1; margin-bottom: 20px; }
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css"/>
 
-        /* CHẶN QUẢNG CÁO TỰ ĐỘNG CHÈN (TIINY HOST HOẶC NETLIFY PHỤ) */
-        div[style*="position: fixed"][style*="z-index: 2147483647"], div[id*="tiiny"], div[class*="tiiny"], iframe, img[alt*="Hosted on Tiiny.host"] {
-            display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; width: 0px !important; height: 0px !important;
-        }
-    </style>
+<style>
+body{
+    margin:0;
+    background:#1e1f22;
+    color:white;
+    font-family:Arial;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+}
+
+#menu{
+    width:95%;
+    max-width:400px;
+    background:#2b2d31;
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+}
+
+input{
+    width:90%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    margin-top:10px;
+    font-size:16px;
+}
+
+button{
+    border:none;
+    padding:12px;
+    border-radius:8px;
+    margin-top:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+#createBtn{
+    background:#2ecc71;
+    color:white;
+    width:100%;
+}
+
+#joinBtn{
+    background:#3498db;
+    color:white;
+    width:100%;
+}
+
+#status{
+    margin-top:15px;
+    font-size:14px;
+    color:#f1c40f;
+}
+
+#board{
+    width:95vw;
+    max-width:500px;
+    display:none;
+}
+
+#gameInfo{
+    margin-top:15px;
+    display:none;
+    text-align:center;
+}
+
+#turn{
+    font-size:18px;
+    margin-bottom:10px;
+}
+
+#autoBtn{
+    background:#9b59b6;
+    color:white;
+    width:200px;
+}
+
+#autoBtn.active{
+    background:#2ecc71;
+}
+
+#history{
+    margin-top:20px;
+    text-align:left;
+}
+
+.historyItem{
+    background:#3a3d42;
+    padding:8px;
+    border-radius:6px;
+    margin-top:5px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+</style>
 </head>
+
 <body>
 
-    <div class="lobby-container" id="lobby-panel">
-        <h2 style="margin: 0 0 10px 0; color: #3498db;">♟️ Sảnh Chờ Online</h2>
-        <p style="font-size: 13px; color: #bdc3c7; margin-bottom: 15px;">Kết nối 2 thiết bị từ xa qua Internet</p>
-        <button class="lobby-btn" id="btn-create-room">➕ Tạo Phòng Mới</button>
-        <div style="margin: 15px 0; color: #7f8c8d;">— HOẶC NỐI PHÒNG —</div>
-        <input type="text" class="lobby-input" id="input-room-id" placeholder="Nhập mã phòng từ bạn bè...">
-        <button class="lobby-btn blue" id="btn-join-room">🔗 Vào Phòng Kết Nối</button>
-        <div id="lobby-status" style="margin-top: 15px; font-weight: bold; color: #e67e22;">Vui lòng chọn tạo hoặc vào phòng...</div>
-        
-        <div class="history-section" id="room-history-section" style="display:none;">
-            <div class="history-title">🕒 Phòng mới chơi gần đây:</div>
-            <ul class="history-list" id="history-list-items"></ul>
+<div id="menu">
+    <h2>♟️ Cờ Vua Online</h2>
+
+    <button id="createBtn">➕ Tạo phòng</button>
+
+    <input id="roomInput" placeholder="Nhập mã phòng">
+
+    <button id="joinBtn">🔗 Vào phòng</button>
+
+    <div id="status">Chưa kết nối</div>
+
+    <div id="history"></div>
+</div>
+
+<div id="board"></div>
+
+<div id="gameInfo">
+    <div id="turn"></div>
+    <button id="autoBtn">🤖 AI: TẮT</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+<script>
+
+let game = new Chess();
+
+let board;
+
+let peer;
+
+let conn;
+
+let myColor = null;
+
+let autoAI = false;
+
+let thinking = false;
+
+const historyKey = "chess_history_rooms";
+
+const pieceValues = {
+    p:100,
+    n:320,
+    b:330,
+    r:500,
+    q:900,
+    k:20000
+};
+
+function saveHistory(room){
+    let list = JSON.parse(localStorage.getItem(historyKey)) || [];
+
+    if(!list.includes(room)){
+        list.unshift(room);
+    }
+
+    if(list.length > 5){
+        list.pop();
+    }
+
+    localStorage.setItem(historyKey, JSON.stringify(list));
+
+    renderHistory();
+}
+
+function renderHistory(){
+
+    let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+
+    if(history.length === 0){
+        $("#history").html("");
+        return;
+    }
+
+    let html = "<h3>🕒 Phòng gần đây</h3>";
+
+    history.forEach(room=>{
+        html += `
+        <div class="historyItem">
+            <span>${room}</span>
+            <button onclick="quickJoin('${room}')">Vào</button>
         </div>
-    </div>
+        `;
+    });
 
-    <div class="game-wrapper" id="board-wrapper">
-        <div id="my-board"></div>
-    </div>
+    $("#history").html(html);
+}
 
-    <div class="result-overlay" id="match-result-popup">
-        <div class="result-card">
-            <div class="result-title" id="res-title">KẾT THÚC!</div>
-            <div class="result-desc" id="res-desc">Trận đấu kết thúc hoàn toàn.</div>
-            <button class="lobby-btn" style="width: 100%;" onclick="location.reload()">🔄 Thoát Ra Sảnh Chờ</button>
-        </div>
-    </div>
+function quickJoin(id){
+    $("#roomInput").val(id);
+    joinRoom(id);
+}
 
-    <div class="bottom-trigger-bar" id="trigger-bar">
-        <button class="menu-toggle-btn" id="open-menu-trigger">🛠️ Cài Đặt Trận Đấu</button>
-    </div>
+function initBoard(){
 
-    <div class="bottom-sheet-menu" id="side-panel">
-        <div class="drag-handle"></div>
-        <div class="menu-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0; color: #3498db;" id="menu-role-title">Vai Trò: Đang kết nối...</h3>
-            <button style="background: #3d4145; border: none; color: white; padding: 5px 10px; border-radius: 4px;" id="close-menu-trigger">Đóng X</button>
-        </div>
-        <div class="menu-section">
-            <div class="section-title">Trạng thái bàn cờ</div>
-            <div class="status-container">
-                <div class="status-text-side">
-                    <div id="game-status" style="font-weight: bold;">Đang chờ...</div>
-                </div>
-                <div class="mini-board-side" id="mini-board"></div>
-            </div>
-        </div>
-        <div class="menu-section">
-            <div class="section-title">Chế độ tự động trực tuyến</div>
-            <button id="auto-mine-btn" class="menu-btn btn-purple">🤖 Để AI Máy Tôi Đánh Hộ: TẮT</button>
-        </div>
-    </div>
+    board = Chessboard("board",{
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+        draggable:true,
 
-    <script>
-        let game = new Chess();
-        let board = null, miniBoard = null;
-        let myRole = null, peer = null, conn = null;
-        let autoMineEnabled = false, isMoving = false, sourceSquare = null;
-        let myRecentMoves = [];
+        position:"start",
 
-        const pieceValues = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-        
-        // HÀM LƯU LỊCH SỬ PHÒNG VÀO ĐIỆN THOẠI
-        function saveRoomToHistory(roomId) {
-            let history = JSON.parse(localStorage.getItem('chess_room_history')) || [];
-            if (!history.includes(roomId)) {
-                history.unshift(roomId); 
-                if (history.length > 4) history.pop(); // Giới hạn lưu 4 phòng gần nhất
-                localStorage.setItem('chess_room_history', JSON.stringify(history));
-            }
-            renderHistory();
+        orientation:myColor,
+
+        pieceTheme:
+        "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png",
+
+        onDragStart:onDragStart,
+
+        onDrop:onDrop,
+
+        onSnapEnd:()=>{
+            board.position(game.fen());
         }
 
-        // HÀM IN LỊCH SỬ RA MÀN HÌNH SẢNH CHỜ
-        function renderHistory() {
-            let history = JSON.parse(localStorage.getItem('chess_room_history')) || [];
-            if (history.length > 0) {
-                $('#room-history-section').show();
-                let html = '';
-                history.forEach((id) => {
-                    html += `<li class="history-item">
-                                <span>🆔 Phòng: <b>${id}</b></span>
-                                <button class="history-connect-btn" onclick="connectToHistoryRoom('${id}')">⚡ Vào Lại</button>
-                             </li>`;
-                });
-                $('#history-list-items').html(html);
-            }
-        }
+    });
 
-        function connectToHistoryRoom(id) {
-            $('#input-room-id').val(id);
-            initNetwork(false, id);
-        }
+}
 
-        function evaluateBoard(chessGame) {
-            let total = 0;
-            chessGame.board().forEach((row) => {
-                row.forEach((piece) => {
-                    if (piece) {
-                        let val = pieceValues[piece.type];
-                        total += (piece.color === 'w') ? val : -val;
-                    }
-                });
-            });
-            return total;
-        }
+function onDragStart(source,piece){
 
-        function calculateBestMove(currentGame) {
-            let moves = currentGame.moves({ verbose: true });
-            if (moves.length === 0) return null;
-            let currentTurn = currentGame.turn();
-            let bestMovesList = [];
-            let bestValue = (currentTurn === 'w') ? -99999 : 99999;
+    if(game.game_over()) return false;
 
-            for (let i = 0; i < moves.length; i++) {
-                let moveCandidate = moves[i];
-                currentGame.move(moveCandidate);
-                let boardValue = evaluateBoard(currentGame);
-                currentGame.undo();
+    if(
+        (game.turn() === "w" && piece.search(/^b/) !== -1) ||
+        (game.turn() === "b" && piece.search(/^w/) !== -1)
+    ){
+        return false;
+    }
 
-                let moveString = moveCandidate.from + moveCandidate.to;
-                if (myRecentMoves.includes(moveString)) {
-                    boardValue += (currentTurn === 'w') ? -800 : 800;
-                }
-                if (currentTurn === 'w') {
-                    if (boardValue > bestValue) { bestValue = boardValue; bestMovesList = [moveCandidate]; }
-                    else if (boardValue === bestValue) { bestMovesList.push(moveCandidate); }
-                } else {
-                    if (boardValue < bestValue) { bestValue = boardValue; bestMovesList = [moveCandidate]; }
-                    else if (boardValue === bestValue) { bestMovesList.push(moveCandidate); }
-                }
-            }
-            return bestMovesList[Math.floor(Math.random() * bestMovesList.length)] || moves[0];
-        }
+    if(
+        (myColor === "white" && piece.search(/^b/) !== -1) ||
+        (myColor === "black" && piece.search(/^w/) !== -1)
+    ){
+        return false;
+    }
 
-        function initNetwork(isHost, targetRoomId = null) {
-            $('#lobby-status').text('⏳ Đang kết nối mạng đám mây...');
-            if (isHost) {
-                let roomId = Math.floor(10000 + Math.random() * 90000).toString();
-                peer = new Peer(roomId);
-                peer.on('open', (id) => {
-                    myRole = 'white';
-                    saveRoomToHistory(id); // Tự lưu mã phòng mình vừa tạo
-                    $('#lobby-status').html(`🎟️ Mã phòng: <span style="font-size:22px; color:#2ecc71;">${id}</span><br>Gửi mã này cho bạn chơi!`);
-                });
-                peer.on('connection', (connection) => {
-                    conn = connection; setupConnectionEvents(); startMatch();
-                });
-            } else {
-                peer = new Peer();
-                peer.on('open', () => {
-                    myRole = 'black'; 
-                    saveRoomToHistory(targetRoomId); // Tự lưu mã phòng mình vừa kết nối vào
-                    conn = peer.connect(targetRoomId); setupConnectionEvents();
-                });
-            }
-            peer.on('error', (err) => { $('#lobby-status').text('❌ Mã phòng không tồn tại!'); });
-        }
+    if(autoAI){
+        return false;
+    }
 
-        function setupConnectionEvents() {
-            conn.on('open', () => { startMatch(); });
-            conn.on('data', (data) => {
-                if (data.type === 'move') {
-                    game.move(data.move); board.position(game.fen(), true);
-                    updateStatus(); setTimeout(() => { checkAndTriggerAutoMove(); }, 400);
-                }
-            });
-            conn.on('close', () => { alert('Đối thủ thoát game!'); location.reload(); });
-        }
+}
 
-        function startMatch() {
-            $('#lobby-panel').hide(); $('#board-wrapper').css('display', 'block'); $('#trigger-bar').css('display', 'flex');
-            const pTheme = 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png';
-            board = Chessboard('my-board', { draggable: false, position: 'start', orientation: myRole, pieceTheme: pTheme });
-            miniBoard = Chessboard('mini-board', { draggable: false, position: 'start', orientation: myRole, pieceTheme: pTheme });
-            $('#menu-role-title').text(`Vai Trò: Phe Quân ${myRole === 'white' ? 'Trắng' : 'Đen'}`);
-            updateStatus(); setTimeout(() => { checkAndTriggerAutoMove(); }, 500);
-        }
+function onDrop(source,target){
 
-        function checkAndTriggerAutoMove() {
-            if (game.game_over() || isMoving) { checkGameEnding(); return; }
-            let currentTurn = game.turn();
-            let isMyTurn = (myRole === 'white' && currentTurn === 'w') || (myRole === 'black' && currentTurn === 'b');
-            if (autoMineEnabled && isMyTurn) {
-                isMoving = true;
-                let bestMove = calculateBestMove(game);
-                if (bestMove) {
-                    myRecentMoves.push(bestMove.from + bestMove.to);
-                    if (myRecentMoves.length > 4) myRecentMoves.shift();
-                    let moveObj = { from: bestMove.from, to: bestMove.to, promotion: 'q' };
-                    game.move(moveObj); board.position(game.fen(), true);
-                    conn.send({ type: 'move', move: moveObj });
-                    updateStatus(); isMoving = false; checkGameEnding();
-                } else { isMoving = false; }
-            }
-        }
+    removeGreySquares();
 
-        function onSquareClick(square) {
-            if (game.game_over() || isMoving) return;
-            let currentTurn = game.turn();
-            let isMyTurn = (myRole === 'white' && currentTurn === 'w') || (myRole === 'black' && currentTurn === 'b');
-            if (!isMyTurn || autoMineEnabled) return;
+    let move = game.move({
+        from:source,
+        to:target,
+        promotion:"q"
+    });
 
-            let piece = game.get(square);
-            if (sourceSquare === null) {
-                if (piece && piece.color === game.turn()) {
-                    sourceSquare = square; removeHighlights();
-                    $('#my-board .square-' + square).addClass('highlight-selected');
-                    game.moves({ square: square, verbose: true }).forEach(m => $('#my-board .square-' + m.to).addClass('highlight-hint'));
-                }
-            } else {
-                let moveObj = { from: sourceSquare, to: square, promotion: 'q' };
-                let move = game.move(moveObj);
-                if (move === null) {
-                    sourceSquare = null; removeHighlights();
-                    if (piece && piece.color === game.turn()) onSquareClick(square);
-                } else {
-                    board.position(game.fen()); sourceSquare = null; removeHighlights();
-                    conn.send({ type: 'move', move: moveObj }); updateStatus(); checkGameEnding();
-                }
-            }
-        }
+    if(move === null){
+        return "snapback";
+    }
 
-        function removeHighlights() { $('#my-board .square-55d63').removeClass('highlight-hint highlight-selected'); }
+    syncBoard();
 
-        function updateStatus() {
-            let currentTurn = game.turn();
-            let isMyTurn = (myRole === 'white' && currentTurn === 'w') || (myRole === 'black' && currentTurn === 'b');
-            let txt = isMyTurn ? "<span style='color:#2ecc71;'>Lượt của BẠN!</span>" : "<span style='color:#7f8c8d;'>Đợi đối thủ...</span>";
-            if (game.in_check()) txt += " <b style='color:#e74c3c;'>(CHIẾU)</b>";
-            $('#game-status').html(txt);
-            if (miniBoard) miniBoard.position(game.fen(), false);
-        }
+    if(conn && conn.open){
 
-        function checkGameEnding() {
-            if (!game.game_over()) return;
-            let title = "HÒA CỜ!"; let desc = "Hai bên bất phân thắng bại.";
-            if (game.in_checkmate()) {
-                let winner = game.turn() === 'w' ? 'QUÂN ĐEN' : 'QUÂN TRẮNG';
-                title = `🏆 ${winner} THẮNG!`; desc = "Chiếu bí thành công.";
-            }
-            $('#res-title').text(title); $('#res-desc').text(desc);
-            $('#match-result-popup').css('display', 'flex');
-        }
-
-        // Khởi động nạp lịch sử khi load trang
-        $(document).ready(function() {
-            renderHistory();
+        conn.send({
+            type:"sync",
+            fen:game.fen()
         });
 
-        $('#btn-create-room').on('click', () => initNetwork(true));
-        $('#btn-join-room').on('click', () => {
-            let rid = $('#input-room-id').val().trim();
-            if (rid) initNetwork(false, rid);
-        });
-        $('#my-board').on('click', '.square-55d63', function() { onSquareClick($(this).attr('data-square')); });
+    }
 
-        $('#open-menu-trigger').on('click', () => {
-            $('#side-panel').addClass('open');
-            setTimeout(() => {
-                if (miniBoard) {
-                    miniBoard.resize();
-                    miniBoard.position(game.fen(), false);
-                }
-            }, 350); 
+    updateStatus();
+
+    setTimeout(()=>{
+        autoMove();
+    },300);
+
+}
+
+function syncBoard(){
+    board.position(game.fen());
+}
+
+function updateStatus(){
+
+    let text = "";
+
+    let myTurn =
+        (myColor === "white" && game.turn() === "w") ||
+        (myColor === "black" && game.turn() === "b");
+
+    if(game.in_checkmate()){
+
+        text = "♛ Chiếu bí";
+
+    }else if(game.in_draw()){
+
+        text = "🤝 Hòa";
+
+    }else{
+
+        text = myTurn ? "👉 Lượt của bạn" : "⏳ Đợi đối thủ";
+
+        if(game.in_check()){
+            text += " - CHIẾU!";
+        }
+
+    }
+
+    $("#turn").text(text);
+
+}
+
+function evaluateBoard(boardState){
+
+    let total = 0;
+
+    boardState.board().forEach(row=>{
+
+        row.forEach(piece=>{
+
+            if(piece){
+
+                let value = pieceValues[piece.type];
+
+                total += piece.color === "w"
+                ? value
+                : -value;
+
+            }
+
         });
-        $('#close-menu-trigger').on('click', () => $('#side-panel').removeClass('open'));
-        $('#auto-mine-btn').on('click', function() {
-            autoMineEnabled = !autoMineEnabled;
-            if (autoMineEnabled) {
-                $(this).addClass('active').text('🤖 Để AI Máy Tôi Đánh Hộ: BẬT'); checkAndTriggerAutoMove();
-            } else { $(this).removeClass('active').text('🤖 Để AI Máy Tôi Đánh Hộ: TẮT'); }
-        });
-    </script>
+
+    });
+
+    return total;
+
+}
+
+function minimax(depth,gameState,alpha,beta,isMax){
+
+    if(depth === 0){
+
+        return evaluateBoard(gameState);
+
+    }
+
+    let moves = gameState.moves({verbose:true});
+
+    if(isMax){
+
+        let best = -999999;
+
+        for(let move of moves){
+
+            gameState.move(move);
+
+            best = Math.max(
+                best,
+                minimax(depth-1,gameState,alpha,beta,false)
+            );
+
+            gameState.undo();
+
+            alpha = Math.max(alpha,best);
+
+            if(beta <= alpha){
+                break;
+            }
+
+        }
+
+        return best;
+
+    }else{
+
+        let best = 999999;
+
+        for(let move of moves){
+
+            gameState.move(move);
+
+            best = Math.min(
+                best,
+                minimax(depth-1,gameState,alpha,beta,true)
+            );
+
+            gameState.undo();
+
+            beta = Math.min(beta,best);
+
+            if(beta <= alpha){
+                break;
+            }
+
+        }
+
+        return best;
+
+    }
+
+}
+
+function getBestMove(){
+
+    let moves = game.moves({verbose:true});
+
+    let bestMove = null;
+
+    let bestValue =
+    game.turn() === "w"
+    ? -999999
+    : 999999;
+
+    for(let move of moves){
+
+        game.move(move);
+
+        let value = minimax(
+            2,
+            game,
+            -1000000,
+            1000000,
+            game.turn() === "b"
+        );
+
+        game.undo();
+
+        if(game.turn() === "w"){
+
+            if(value > bestValue){
+                bestValue = value;
+                bestMove = move;
+            }
+
+        }else{
+
+            if(value < bestValue){
+                bestValue = value;
+                bestMove = move;
+            }
+
+        }
+
+    }
+
+    return bestMove;
+
+}
+
+function autoMove(){
+
+    if(!autoAI) return;
+
+    if(game.game_over()) return;
+
+    if(thinking) return;
+
+    let myTurn =
+        (myColor === "white" && game.turn() === "w") ||
+        (myColor === "black" && game.turn() === "b");
+
+    if(!myTurn) return;
+
+    thinking = true;
+
+    setTimeout(()=>{
+
+        let move = getBestMove();
+
+        if(move){
+
+            game.move(move);
+
+            syncBoard();
+
+            if(conn && conn.open){
+
+                conn.send({
+                    type:"sync",
+                    fen:game.fen()
+                });
+
+            }
+
+        }
+
+        updateStatus();
+
+        thinking = false;
+
+    },300);
+
+}
+
+function createRoom(){
+
+    let roomId =
+    Math.floor(10000 + Math.random()*90000).toString();
+
+    peer = new Peer(roomId);
+
+    myColor = "white";
+
+    peer.on("open",(id)=>{
+
+        $("#status").html(
+            `🎟️ Mã phòng: <b style="font-size:24px;color:#2ecc71">${id}</b>`
+        );
+
+        saveHistory(id);
+
+    });
+
+    peer.on("connection",(connection)=>{
+
+        conn = connection;
+
+        setupConnection();
+
+        startGame();
+
+    });
+
+}
+
+function joinRoom(id){
+
+    peer = new Peer();
+
+    myColor = "black";
+
+    peer.on("open",()=>{
+
+        conn = peer.connect(id);
+
+        setupConnection();
+
+    });
+
+    saveHistory(id);
+
+}
+
+function setupConnection(){
+
+    conn.on("open",()=>{
+
+        $("#status").text("✅ Đã kết nối");
+
+        startGame();
+
+    });
+
+    conn.on("data",(data)=>{
+
+        if(data.type === "sync"){
+
+            game.load(data.fen);
+
+            syncBoard();
+
+            updateStatus();
+
+            setTimeout(()=>{
+                autoMove();
+            },300);
+
+        }
+
+    });
+
+    conn.on("close",()=>{
+
+        alert("Đối thủ đã thoát");
+
+        location.reload();
+
+    });
+
+}
+
+function startGame(){
+
+    $("#menu").hide();
+
+    $("#board").show();
+
+    $("#gameInfo").show();
+
+    if(!board){
+        initBoard();
+    }
+
+    updateStatus();
+
+    autoMove();
+
+}
+
+function removeGreySquares(){
+
+    $("#board .square-55d63").css("background","");
+
+}
+
+$("#createBtn").click(()=>{
+    createRoom();
+});
+
+$("#joinBtn").click(()=>{
+
+    let room = $("#roomInput").val().trim();
+
+    if(room){
+
+        joinRoom(room);
+
+    }
+
+});
+
+$("#autoBtn").click(function(){
+
+    autoAI = !autoAI;
+
+    if(autoAI){
+
+        $(this)
+        .addClass("active")
+        .text("🤖 AI: BẬT");
+
+        autoMove();
+
+    }else{
+
+        $(this)
+        .removeClass("active")
+        .text("🤖 AI: TẮT");
+
+    }
+
+});
+
+renderHistory();
+
+</script>
+
 </body>
 </html>
