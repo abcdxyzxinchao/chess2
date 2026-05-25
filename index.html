@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cờ Vua Online P2P</title>
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css"/>
+<title>Cờ Tướng Online P2P</title>
 
 <style>
 body{
@@ -30,15 +27,6 @@ body{
     text-align:center;
 }
 
-input{
-    width:90%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    margin-top:10px;
-    font-size:16px;
-}
-
 button{
     border:none;
     padding:12px;
@@ -46,6 +34,15 @@ button{
     margin-top:10px;
     cursor:pointer;
     font-weight:bold;
+}
+
+input{
+    width:90%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    margin-top:10px;
+    font-size:16px;
 }
 
 #createBtn{
@@ -62,50 +59,69 @@ button{
 
 #status{
     margin-top:15px;
-    font-size:14px;
     color:#f1c40f;
 }
 
 #board{
-    width:95vw;
-    max-width:500px;
+    margin-top:15px;
     display:none;
+    position:relative;
+}
+
+.row{
+    display:flex;
+}
+
+.cell{
+    width:42px;
+    height:42px;
+    border:1px solid #d4a373;
+    background:#f5deb3;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    cursor:pointer;
+    user-select:none;
+    position:relative;
+}
+
+.cell.selected{
+    background:#f1c40f;
+}
+
+.cell.move{
+    background:#2ecc71;
+}
+
+.red{
+    color:#e74c3c;
+    font-weight:bold;
+}
+
+.black{
+    color:#111;
+    font-weight:bold;
 }
 
 #gameInfo{
-    margin-top:15px;
     display:none;
     text-align:center;
+    margin-top:15px;
 }
 
 #turn{
-    font-size:18px;
     margin-bottom:10px;
+    font-size:18px;
 }
 
 #autoBtn{
     background:#9b59b6;
     color:white;
-    width:200px;
 }
 
 #autoBtn.active{
     background:#2ecc71;
-}
-
-#history{
-    margin-top:20px;
-    text-align:left;
-}
-
-.historyItem{
-    background:#3a3d42;
-    padding:8px;
-    border-radius:6px;
-    margin-top:5px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
 }
 </style>
 </head>
@@ -113,7 +129,7 @@ button{
 <body>
 
 <div id="menu">
-    <h2>♟️ Cờ Vua Online</h2>
+    <h2>♟️ Cờ Tướng Online</h2>
 
     <button id="createBtn">➕ Tạo phòng</button>
 
@@ -122,8 +138,6 @@ button{
     <button id="joinBtn">🔗 Vào phòng</button>
 
     <div id="status">Chưa kết nối</div>
-
-    <div id="history"></div>
 </div>
 
 <div id="board"></div>
@@ -133,533 +147,646 @@ button{
     <button id="autoBtn">🤖 AI: TẮT</button>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
-
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <script>
 
-let game = new Chess();
-
-let board;
+const ROWS = 10;
+const COLS = 9;
 
 let peer;
-
 let conn;
 
-let myColor = null;
+let mySide = null;
 
 let autoAI = false;
 
-let thinking = false;
+let selected = null;
 
-const historyKey = "chess_history_rooms";
+let board = [];
 
-const pieceValues = {
-    p:100,
-    n:320,
-    b:330,
-    r:500,
-    q:900,
-    k:20000
+const PIECES = {
+    r:"車",
+    h:"馬",
+    e:"象",
+    a:"士",
+    k:"將",
+    c:"炮",
+    p:"卒",
+
+    R:"車",
+    H:"馬",
+    E:"相",
+    A:"仕",
+    K:"帥",
+    C:"炮",
+    P:"兵"
 };
-
-function saveHistory(room){
-    let list = JSON.parse(localStorage.getItem(historyKey)) || [];
-
-    if(!list.includes(room)){
-        list.unshift(room);
-    }
-
-    if(list.length > 5){
-        list.pop();
-    }
-
-    localStorage.setItem(historyKey, JSON.stringify(list));
-
-    renderHistory();
-}
-
-function renderHistory(){
-
-    let history = JSON.parse(localStorage.getItem(historyKey)) || [];
-
-    if(history.length === 0){
-        $("#history").html("");
-        return;
-    }
-
-    let html = "<h3>🕒 Phòng gần đây</h3>";
-
-    history.forEach(room=>{
-        html += `
-        <div class="historyItem">
-            <span>${room}</span>
-            <button onclick="quickJoin('${room}')">Vào</button>
-        </div>
-        `;
-    });
-
-    $("#history").html(html);
-}
-
-function quickJoin(id){
-    $("#roomInput").val(id);
-    joinRoom(id);
-}
 
 function initBoard(){
 
-    board = Chessboard("board",{
+board = [
 
-        draggable:true,
+["r","h","e","a","k","a","e","h","r"],
+["","","","","","","","",""],
+["","c","","","","","","c",""],
+["p","","p","","p","","p","","p"],
+["","","","","","","","",""],
 
-        position:"start",
+["","","","","","","","",""],
 
-        orientation:myColor,
+["P","","P","","P","","P","","P"],
+["","C","","","","","","C",""],
+["","","","","","","","",""],
+["R","H","E","A","K","A","E","H","R"]
 
-        pieceTheme:
-        "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png",
+];
 
-        onDragStart:onDragStart,
+}
 
-        onDrop:onDrop,
+function renderBoard(){
 
-        onSnapEnd:()=>{
-            board.position(game.fen());
+const boardDiv = document.getElementById("board");
+
+boardDiv.innerHTML = "";
+
+for(let r=0;r<ROWS;r++){
+
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "row";
+
+    for(let c=0;c<COLS;c++){
+
+        const cell = document.createElement("div");
+
+        cell.className = "cell";
+
+        cell.dataset.row = r;
+        cell.dataset.col = c;
+
+        const piece = board[r][c];
+
+        if(piece){
+
+            cell.innerHTML = PIECES[piece];
+
+            if(piece === piece.toUpperCase()){
+                cell.classList.add("red");
+            }else{
+                cell.classList.add("black");
+            }
+
         }
 
-    });
+        cell.onclick = ()=>handleClick(r,c);
+
+        rowDiv.appendChild(cell);
+
+    }
+
+    boardDiv.appendChild(rowDiv);
 
 }
 
-function onDragStart(source,piece){
+}
 
-    if(game.game_over()) return false;
+function isRed(piece){
+    return piece && piece === piece.toUpperCase();
+}
 
-    if(
-        (game.turn() === "w" && piece.search(/^b/) !== -1) ||
-        (game.turn() === "b" && piece.search(/^w/) !== -1)
-    ){
-        return false;
-    }
+function currentTurn(){
 
-    if(
-        (myColor === "white" && piece.search(/^b/) !== -1) ||
-        (myColor === "black" && piece.search(/^w/) !== -1)
-    ){
-        return false;
-    }
+    return turn;
+}
 
-    if(autoAI){
-        return false;
+let turn = "red";
+
+function handleClick(r,c){
+
+if(!isMyTurn()) return;
+
+const piece = board[r][c];
+
+if(selected){
+
+    const move = isValidMove(selected.r,selected.c,r,c);
+
+    if(move){
+
+        movePiece(selected.r,selected.c,r,c);
+
+        selected = null;
+
+        renderBoard();
+
+        syncGame();
+
+        switchTurn();
+
+        aiMove();
+
+        return;
     }
 
 }
 
-function onDrop(source,target){
+if(piece){
 
-    removeGreySquares();
-
-    let move = game.move({
-        from:source,
-        to:target,
-        promotion:"q"
-    });
-
-    if(move === null){
-        return "snapback";
+    if(turn === "red" && isRed(piece)){
+        selected = {r,c};
     }
 
-    syncBoard();
-
-    if(conn && conn.open){
-
-        conn.send({
-            type:"sync",
-            fen:game.fen()
-        });
-
+    if(turn === "black" && !isRed(piece)){
+        selected = {r,c};
     }
-
-    updateStatus();
-
-    setTimeout(()=>{
-        autoMove();
-    },300);
 
 }
 
-function syncBoard(){
-    board.position(game.fen());
+renderBoard();
+
+if(selected){
+
+    const index =
+    selected.r * COLS + selected.c;
+
+    document.querySelectorAll(".cell")[index]
+    .classList.add("selected");
+
+}
+
+}
+
+function movePiece(sr,sc,tr,tc){
+
+board[tr][tc] = board[sr][sc];
+
+board[sr][sc] = "";
+
+}
+
+function switchTurn(){
+
+turn = turn === "red"
+? "black"
+: "red";
+
+updateStatus();
+
+}
+
+function isMyTurn(){
+
+return (
+(mySide === "red" && turn === "red") ||
+(mySide === "black" && turn === "black")
+);
+
 }
 
 function updateStatus(){
 
-    let text = "";
-
-    let myTurn =
-        (myColor === "white" && game.turn() === "w") ||
-        (myColor === "black" && game.turn() === "b");
-
-    if(game.in_checkmate()){
-
-        text = "♛ Chiếu bí";
-
-    }else if(game.in_draw()){
-
-        text = "🤝 Hòa";
-
-    }else{
-
-        text = myTurn ? "👉 Lượt của bạn" : "⏳ Đợi đối thủ";
-
-        if(game.in_check()){
-            text += " - CHIẾU!";
-        }
-
-    }
-
-    $("#turn").text(text);
+document.getElementById("turn").innerHTML =
+isMyTurn()
+? "👉 Lượt của bạn"
+: "⏳ Đợi đối thủ";
 
 }
 
-function evaluateBoard(boardState){
+function isInside(r,c){
 
-    let total = 0;
-
-    boardState.board().forEach(row=>{
-
-        row.forEach(piece=>{
-
-            if(piece){
-
-                let value = pieceValues[piece.type];
-
-                total += piece.color === "w"
-                ? value
-                : -value;
-
-            }
-
-        });
-
-    });
-
-    return total;
+return r >=0 && r < ROWS &&
+c >=0 && c < COLS;
 
 }
 
-function minimax(depth,gameState,alpha,beta,isMax){
+function isValidMove(sr,sc,tr,tc){
 
-    if(depth === 0){
+if(!isInside(tr,tc)) return false;
 
-        return evaluateBoard(gameState);
+const piece = board[sr][sc];
 
-    }
+const target = board[tr][tc];
 
-    let moves = gameState.moves({verbose:true});
+if(target){
 
-    if(isMax){
-
-        let best = -999999;
-
-        for(let move of moves){
-
-            gameState.move(move);
-
-            best = Math.max(
-                best,
-                minimax(depth-1,gameState,alpha,beta,false)
-            );
-
-            gameState.undo();
-
-            alpha = Math.max(alpha,best);
-
-            if(beta <= alpha){
-                break;
-            }
-
-        }
-
-        return best;
-
-    }else{
-
-        let best = 999999;
-
-        for(let move of moves){
-
-            gameState.move(move);
-
-            best = Math.min(
-                best,
-                minimax(depth-1,gameState,alpha,beta,true)
-            );
-
-            gameState.undo();
-
-            beta = Math.min(beta,best);
-
-            if(beta <= alpha){
-                break;
-            }
-
-        }
-
-        return best;
-
-    }
+if(isRed(piece) === isRed(target)){
+    return false;
+}
 
 }
 
-function getBestMove(){
+const dr = tr - sr;
+const dc = tc - sc;
 
-    let moves = game.moves({verbose:true});
+switch(piece.toLowerCase()){
 
-    let bestMove = null;
+case "r":
 
-    let bestValue =
-    game.turn() === "w"
-    ? -999999
-    : 999999;
+if(sr !== tr && sc !== tc)
+return false;
 
-    for(let move of moves){
+if(sr === tr){
 
-        game.move(move);
+let step = dc > 0 ? 1 : -1;
 
-        let value = minimax(
-            2,
-            game,
-            -1000000,
-            1000000,
-            game.turn() === "b"
-        );
+for(let c=sc+step;c!==tc;c+=step){
 
-        game.undo();
-
-        if(game.turn() === "w"){
-
-            if(value > bestValue){
-                bestValue = value;
-                bestMove = move;
-            }
-
-        }else{
-
-            if(value < bestValue){
-                bestValue = value;
-                bestMove = move;
-            }
-
-        }
-
-    }
-
-    return bestMove;
+if(board[sr][c] !== "")
+return false;
 
 }
 
-function autoMove(){
+}else{
 
-    if(!autoAI) return;
+let step = dr > 0 ? 1 : -1;
 
-    if(game.game_over()) return;
+for(let r=sr+step;r!==tr;r+=step){
 
-    if(thinking) return;
+if(board[r][sc] !== "")
+return false;
 
-    let myTurn =
-        (myColor === "white" && game.turn() === "w") ||
-        (myColor === "black" && game.turn() === "b");
+}
 
-    if(!myTurn) return;
+}
 
-    thinking = true;
+return true;
 
-    setTimeout(()=>{
+case "h":
 
-        let move = getBestMove();
+if(
+(Math.abs(dr)===2 && Math.abs(dc)===1) ||
+(Math.abs(dr)===1 && Math.abs(dc)===2)
+){
+return true;
+}
 
-        if(move){
+return false;
 
-            game.move(move);
+case "k":
 
-            syncBoard();
+if(Math.abs(dr)+Math.abs(dc)!==1)
+return false;
 
-            if(conn && conn.open){
+if(isRed(piece)){
 
-                conn.send({
-                    type:"sync",
-                    fen:game.fen()
-                });
+return tr >=7 && tc>=3 && tc<=5;
 
-            }
+}else{
 
-        }
+return tr <=2 && tc>=3 && tc<=5;
 
-        updateStatus();
+}
 
-        thinking = false;
+case "p":
 
-    },300);
+if(isRed(piece)){
+
+if(sr <=4){
+
+if(
+(dr===-1 && dc===0) ||
+(dr===0 && Math.abs(dc)===1)
+) return true;
+
+}else{
+
+if(dr===-1 && dc===0)
+return true;
+
+}
+
+}else{
+
+if(sr >=5){
+
+if(
+(dr===1 && dc===0) ||
+(dr===0 && Math.abs(dc)===1)
+) return true;
+
+}else{
+
+if(dr===1 && dc===0)
+return true;
+
+}
+
+}
+
+return false;
+
+case "c":
+
+if(sr !== tr && sc !== tc)
+return false;
+
+let count = 0;
+
+if(sr === tr){
+
+let step = dc > 0 ? 1 : -1;
+
+for(let c=sc+step;c!==tc;c+=step){
+
+if(board[sr][c] !== "")
+count++;
+
+}
+
+}else{
+
+let step = dr > 0 ? 1 : -1;
+
+for(let r=sr+step;r!==tr;r+=step){
+
+if(board[r][sc] !== "")
+count++;
+
+}
+
+}
+
+if(target === ""){
+
+return count === 0;
+
+}else{
+
+return count === 1;
+
+}
+
+case "a":
+
+if(Math.abs(dr)!==1 || Math.abs(dc)!==1)
+return false;
+
+if(isRed(piece)){
+
+return tr >=7 && tc>=3 && tc<=5;
+
+}else{
+
+return tr <=2 && tc>=3 && tc<=5;
+
+}
+
+case "e":
+
+if(Math.abs(dr)!==2 || Math.abs(dc)!==2)
+return false;
+
+if(isRed(piece) && tr <5)
+return false;
+
+if(!isRed(piece) && tr >4)
+return false;
+
+return true;
+
+}
+
+return false;
+
+}
+
+function syncGame(){
+
+if(conn && conn.open){
+
+conn.send({
+type:"sync",
+board,
+turn
+});
+
+}
+
+}
+
+function randomMove(){
+
+let moves = [];
+
+for(let r=0;r<ROWS;r++){
+
+for(let c=0;c<COLS;c++){
+
+const piece = board[r][c];
+
+if(!piece) continue;
+
+if(turn==="red" && !isRed(piece))
+continue;
+
+if(turn==="black" && isRed(piece))
+continue;
+
+for(let tr=0;tr<ROWS;tr++){
+
+for(let tc=0;tc<COLS;tc++){
+
+if(isValidMove(r,c,tr,tc)){
+
+moves.push({
+sr:r,
+sc:c,
+tr,
+tc
+});
+
+}
+
+}
+
+}
+
+}
+
+}
+
+if(moves.length===0)
+return null;
+
+return moves[
+Math.floor(Math.random()*moves.length)
+];
+
+}
+
+function aiMove(){
+
+if(!autoAI) return;
+
+if(!isMyTurn()) return;
+
+setTimeout(()=>{
+
+const move = randomMove();
+
+if(move){
+
+movePiece(
+move.sr,
+move.sc,
+move.tr,
+move.tc
+);
+
+renderBoard();
+
+syncGame();
+
+switchTurn();
+
+}
+
+},500);
 
 }
 
 function createRoom(){
 
-    let roomId =
-    Math.floor(10000 + Math.random()*90000).toString();
+const id =
+Math.floor(10000+Math.random()*90000).toString();
 
-    peer = new Peer(roomId);
+peer = new Peer(id);
 
-    myColor = "white";
+mySide = "red";
 
-    peer.on("open",(id)=>{
+peer.on("open",(id)=>{
 
-        $("#status").html(
-            `🎟️ Mã phòng: <b style="font-size:24px;color:#2ecc71">${id}</b>`
-        );
+document.getElementById("status")
+.innerHTML =
+`🎟️ Mã phòng:
+<b style="font-size:24px;color:#2ecc71">${id}</b>`;
 
-        saveHistory(id);
+});
 
-    });
+peer.on("connection",(connection)=>{
 
-    peer.on("connection",(connection)=>{
+conn = connection;
 
-        conn = connection;
+setupConnection();
 
-        setupConnection();
+startGame();
 
-        startGame();
-
-    });
+});
 
 }
 
 function joinRoom(id){
 
-    peer = new Peer();
+peer = new Peer();
 
-    myColor = "black";
+mySide = "black";
 
-    peer.on("open",()=>{
+peer.on("open",()=>{
 
-        conn = peer.connect(id);
+conn = peer.connect(id);
 
-        setupConnection();
+setupConnection();
 
-    });
-
-    saveHistory(id);
+});
 
 }
 
 function setupConnection(){
 
-    conn.on("open",()=>{
+conn.on("open",()=>{
 
-        $("#status").text("✅ Đã kết nối");
+document.getElementById("status")
+.innerHTML = "✅ Đã kết nối";
 
-        startGame();
+startGame();
 
-    });
+});
 
-    conn.on("data",(data)=>{
+conn.on("data",(data)=>{
 
-        if(data.type === "sync"){
+board = data.board;
 
-            game.load(data.fen);
+turn = data.turn;
 
-            syncBoard();
+renderBoard();
 
-            updateStatus();
+updateStatus();
 
-            setTimeout(()=>{
-                autoMove();
-            },300);
+aiMove();
 
-        }
+});
 
-    });
+conn.on("close",()=>{
 
-    conn.on("close",()=>{
+alert("Đối thủ thoát");
 
-        alert("Đối thủ đã thoát");
+location.reload();
 
-        location.reload();
-
-    });
+});
 
 }
 
 function startGame(){
 
-    $("#menu").hide();
+document.getElementById("menu")
+.style.display = "none";
 
-    $("#board").show();
+document.getElementById("board")
+.style.display = "block";
 
-    $("#gameInfo").show();
+document.getElementById("gameInfo")
+.style.display = "block";
 
-    if(!board){
-        initBoard();
-    }
+renderBoard();
 
-    updateStatus();
+updateStatus();
 
-    autoMove();
-
-}
-
-function removeGreySquares(){
-
-    $("#board .square-55d63").css("background","");
+aiMove();
 
 }
 
-$("#createBtn").click(()=>{
-    createRoom();
-});
+document.getElementById("createBtn")
+.onclick = ()=>createRoom();
 
-$("#joinBtn").click(()=>{
+document.getElementById("joinBtn")
+.onclick = ()=>{
 
-    let room = $("#roomInput").val().trim();
+const id =
+document.getElementById("roomInput")
+.value.trim();
 
-    if(room){
+if(id){
 
-        joinRoom(room);
+joinRoom(id);
 
-    }
+}
 
-});
+};
 
-$("#autoBtn").click(function(){
+document.getElementById("autoBtn")
+.onclick = function(){
 
-    autoAI = !autoAI;
+autoAI = !autoAI;
 
-    if(autoAI){
+if(autoAI){
 
-        $(this)
-        .addClass("active")
-        .text("🤖 AI: BẬT");
+this.classList.add("active");
 
-        autoMove();
+this.innerHTML = "🤖 AI: BẬT";
 
-    }else{
+aiMove();
 
-        $(this)
-        .removeClass("active")
-        .text("🤖 AI: TẮT");
+}else{
 
-    }
+this.classList.remove("active");
 
-});
+this.innerHTML = "🤖 AI: TẮT";
 
-renderHistory();
+}
+
+};
+
+initBoard();
 
 </script>
 
