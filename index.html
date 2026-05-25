@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Cờ Tướng Online AI</title>
+<title>Cờ Tướng Online Chuẩn</title>
 
 <style>
+
 body{
     margin:0;
     background:#1f2125;
@@ -27,15 +28,6 @@ body{
     text-align:center;
 }
 
-input{
-    width:90%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    margin-top:10px;
-    font-size:16px;
-}
-
 button{
     border:none;
     padding:12px;
@@ -43,6 +35,14 @@ button{
     margin-top:10px;
     cursor:pointer;
     font-weight:bold;
+}
+
+input{
+    width:90%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    margin-top:10px;
 }
 
 #createBtn{
@@ -62,39 +62,69 @@ button{
     color:#f1c40f;
 }
 
-#board{
+#boardContainer{
     display:none;
     margin-top:10px;
+    position:relative;
 }
 
-.row{
-    display:flex;
-}
-
-.cell{
-    width:44px;
-    height:44px;
+#board{
+    position:relative;
+    width:540px;
+    height:600px;
     background:#f5deb3;
-    border:1px solid #8b5a2b;
+    border:4px solid #8b4513;
+}
+
+.line{
+    position:absolute;
+    background:#000;
+}
+
+.piece{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    position:absolute;
+    background:#f9d976;
+    border:2px solid #8b4513;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:24px;
+    font-size:28px;
     font-weight:bold;
     cursor:pointer;
     user-select:none;
-}
-
-.cell.selected{
-    background:#f1c40f;
+    z-index:5;
+    transition:0.15s;
 }
 
 .red{
-    color:#e74c3c;
+    color:#d63031;
 }
 
 .black{
     color:#111;
+}
+
+.selected{
+    box-shadow:0 0 15px #00ff00;
+    transform:scale(1.08);
+}
+
+#river{
+    position:absolute;
+    top:270px;
+    left:0;
+    width:100%;
+    height:60px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:36px;
+    color:#8b4513;
+    font-weight:bold;
+    letter-spacing:10px;
 }
 
 #gameInfo{
@@ -104,7 +134,7 @@ button{
 }
 
 #turn{
-    font-size:18px;
+    font-size:20px;
     margin-bottom:10px;
 }
 
@@ -116,6 +146,7 @@ button{
 #autoBtn.active{
     background:#2ecc71;
 }
+
 </style>
 </head>
 
@@ -135,7 +166,15 @@ button{
 
 </div>
 
-<div id="board"></div>
+<div id="boardContainer">
+
+<div id="board">
+
+<div id="river">楚 河　　　　漢 界</div>
+
+</div>
+
+</div>
 
 <div id="gameInfo">
 
@@ -149,23 +188,9 @@ button{
 
 <script>
 
-const ROWS = 10;
-const COLS = 9;
+const CELL = 60;
 
-let peer;
-let conn;
-
-let mySide = null;
-
-let autoAI = false;
-
-let selected = null;
-
-let turn = "red";
-
-let board = [];
-
-const pieces = {
+const piecesMap = {
 
 r:"車",
 h:"馬",
@@ -184,6 +209,19 @@ C:"炮",
 P:"兵"
 
 };
+
+let peer;
+let conn;
+
+let mySide = null;
+
+let autoAI = false;
+
+let selected = null;
+
+let turn = "red";
+
+let board = [];
 
 function initBoard(){
 
@@ -206,93 +244,188 @@ board = [
 
 }
 
-function renderBoard(){
+function drawBoard(){
 
 const boardDiv = document.getElementById("board");
 
-boardDiv.innerHTML = "";
+document.querySelectorAll(".line").forEach(e=>e.remove());
 
-for(let r=0;r<ROWS;r++){
+for(let i=0;i<10;i++){
 
-const row = document.createElement("div");
+let line = document.createElement("div");
 
-row.className = "row";
+line.className = "line";
 
-for(let c=0;c<COLS;c++){
+line.style.left = "30px";
+line.style.top = (30 + i*60) + "px";
+line.style.width = "480px";
+line.style.height = "2px";
 
-const cell = document.createElement("div");
+boardDiv.appendChild(line);
 
-cell.className = "cell";
+}
 
-cell.dataset.r = r;
-cell.dataset.c = c;
+for(let i=0;i<9;i++){
+
+if(i===0 || i===8){
+
+let line = document.createElement("div");
+
+line.className = "line";
+
+line.style.left = (30 + i*60) + "px";
+line.style.top = "30px";
+line.style.width = "2px";
+line.style.height = "540px";
+
+boardDiv.appendChild(line);
+
+}else{
+
+let topLine = document.createElement("div");
+
+topLine.className = "line";
+
+topLine.style.left = (30 + i*60) + "px";
+topLine.style.top = "30px";
+topLine.style.width = "2px";
+topLine.style.height = "240px";
+
+boardDiv.appendChild(topLine);
+
+let bottomLine = document.createElement("div");
+
+bottomLine.className = "line";
+
+bottomLine.style.left = (30 + i*60) + "px";
+bottomLine.style.top = "330px";
+bottomLine.style.width = "2px";
+bottomLine.style.height = "240px";
+
+boardDiv.appendChild(bottomLine);
+
+}
+
+}
+
+drawPalace(3,0);
+drawPalace(3,7);
+
+}
+
+function drawPalace(col,row){
+
+const boardDiv = document.getElementById("board");
+
+function addDiagonal(x1,y1,x2,y2){
+
+let line = document.createElement("div");
+
+line.className = "line";
+
+let length = Math.sqrt(
+Math.pow(x2-x1,2) +
+Math.pow(y2-y1,2)
+);
+
+line.style.width = length + "px";
+line.style.height = "2px";
+
+line.style.left = x1 + "px";
+line.style.top = y1 + "px";
+
+let angle = Math.atan2(
+y2-y1,
+x2-x1
+) * 180 / Math.PI;
+
+line.style.transform =
+`rotate(${angle}deg)`;
+
+line.style.transformOrigin = "0 0";
+
+boardDiv.appendChild(line);
+
+}
+
+addDiagonal(
+30 + col*60,
+30 + row*60,
+30 + (col+2)*60,
+30 + (row+2)*60
+);
+
+addDiagonal(
+30 + (col+2)*60,
+30 + row*60,
+30 + col*60,
+30 + (row+2)*60
+);
+
+}
+
+function renderPieces(){
+
+document.querySelectorAll(".piece")
+.forEach(e=>e.remove());
+
+const boardDiv =
+document.getElementById("board");
+
+for(let r=0;r<10;r++){
+
+for(let c=0;c<9;c++){
 
 const piece = board[r][c];
 
 if(piece){
 
-cell.innerHTML = pieces[piece];
+const div =
+document.createElement("div");
+
+div.className = "piece";
 
 if(piece === piece.toUpperCase()){
 
-cell.classList.add("red");
+div.classList.add("red");
 
 }else{
 
-cell.classList.add("black");
+div.classList.add("black");
+
+}
+
+if(
+selected &&
+selected.r===r &&
+selected.c===c
+){
+
+div.classList.add("selected");
+
+}
+
+div.innerHTML = piecesMap[piece];
+
+div.style.left =
+(30 + c*60 - 24) + "px";
+
+div.style.top =
+(30 + r*60 - 24) + "px";
+
+div.onclick = ()=>clickPiece(r,c);
+
+boardDiv.appendChild(div);
 
 }
 
 }
 
-cell.onclick = ()=>clickCell(r,c);
-
-row.appendChild(cell);
-
-}
-
-boardDiv.appendChild(row);
-
-}
-
-if(selected){
-
-const index = selected.r * COLS + selected.c;
-
-document.querySelectorAll(".cell")[index]
-.classList.add("selected");
-
 }
 
 }
 
-function isRed(piece){
-
-return piece &&
-piece === piece.toUpperCase();
-
-}
-
-function isMyTurn(){
-
-return (
-(mySide === "red" && turn === "red") ||
-(mySide === "black" && turn === "black")
-);
-
-}
-
-function updateTurn(){
-
-document.getElementById("turn")
-.innerHTML =
-isMyTurn()
-? "👉 Lượt của bạn"
-: "⏳ Đợi đối thủ";
-
-}
-
-function clickCell(r,c){
+function clickPiece(r,c){
 
 if(!isMyTurn()) return;
 
@@ -300,13 +433,23 @@ const piece = board[r][c];
 
 if(selected){
 
-if(isValidMove(selected.r,selected.c,r,c)){
+if(isValidMove(
+selected.r,
+selected.c,
+r,
+c
+)){
 
-movePiece(selected.r,selected.c,r,c);
+movePiece(
+selected.r,
+selected.c,
+r,
+c
+);
 
 selected = null;
 
-renderBoard();
+renderPieces();
 
 syncGame();
 
@@ -324,27 +467,31 @@ return;
 
 selected = null;
 
+renderPieces();
+
 }
 
 }
 
 if(piece){
 
-if(turn === "red" && isRed(piece)){
+if(turn==="red" &&
+piece===piece.toUpperCase()){
 
 selected = {r,c};
 
 }
 
-if(turn === "black" && !isRed(piece)){
+if(turn==="black" &&
+piece===piece.toLowerCase()){
 
 selected = {r,c};
 
 }
 
-}
+renderPieces();
 
-renderBoard();
+}
 
 }
 
@@ -356,10 +503,33 @@ board[sr][sc] = "";
 
 }
 
+function isInside(r,c){
+
+return r>=0 && r<10 &&
+c>=0 && c<9;
+
+}
+
+function isRed(piece){
+
+return piece &&
+piece===piece.toUpperCase();
+
+}
+
+function isMyTurn(){
+
+return (
+(mySide==="red" && turn==="red") ||
+(mySide==="black" && turn==="black")
+);
+
+}
+
 function switchTurn(){
 
 turn =
-turn === "red"
+turn==="red"
 ? "black"
 : "red";
 
@@ -367,10 +537,13 @@ updateTurn();
 
 }
 
-function isInside(r,c){
+function updateTurn(){
 
-return r>=0 && r<ROWS &&
-c>=0 && c<COLS;
+document.getElementById("turn")
+.innerHTML =
+isMyTurn()
+? "👉 Lượt của bạn"
+: "⏳ Đợi đối thủ";
 
 }
 
@@ -385,28 +558,28 @@ const target = board[tr][tc];
 
 if(target){
 
-if(isRed(piece) === isRed(target))
+if(isRed(piece)===isRed(target))
 return false;
 
 }
 
-const dr = tr - sr;
-const dc = tc - sc;
+const dr = tr-sr;
+const dc = tc-sc;
 
 switch(piece.toLowerCase()){
 
 case "r":
 
-if(sr !== tr && sc !== tc)
+if(sr!==tr && sc!==tc)
 return false;
 
-if(sr === tr){
+if(sr===tr){
 
 let step = dc>0 ? 1 : -1;
 
 for(let c=sc+step;c!==tc;c+=step){
 
-if(board[sr][c] !== "")
+if(board[sr][c]!=="")
 return false;
 
 }
@@ -417,7 +590,7 @@ let step = dr>0 ? 1 : -1;
 
 for(let r=sr+step;r!==tr;r+=step){
 
-if(board[r][sc] !== "")
+if(board[r][sc]!=="")
 return false;
 
 }
@@ -429,8 +602,11 @@ return true;
 case "h":
 
 if(
-(Math.abs(dr)===2 && Math.abs(dc)===1) ||
-(Math.abs(dr)===1 && Math.abs(dc)===2)
+(Math.abs(dr)===2 &&
+Math.abs(dc)===1) ||
+
+(Math.abs(dr)===1 &&
+Math.abs(dc)===2)
 ){
 
 return true;
@@ -438,51 +614,6 @@ return true;
 }
 
 return false;
-
-case "k":
-
-if(Math.abs(dr)+Math.abs(dc)!==1)
-return false;
-
-if(isRed(piece)){
-
-return tr>=7 && tc>=3 && tc<=5;
-
-}else{
-
-return tr<=2 && tc>=3 && tc<=5;
-
-}
-
-case "a":
-
-if(Math.abs(dr)!==1 ||
-Math.abs(dc)!==1)
-return false;
-
-if(isRed(piece)){
-
-return tr>=7 && tc>=3 && tc<=5;
-
-}else{
-
-return tr<=2 && tc>=3 && tc<=5;
-
-}
-
-case "e":
-
-if(Math.abs(dr)!==2 ||
-Math.abs(dc)!==2)
-return false;
-
-if(isRed(piece) && tr<5)
-return false;
-
-if(!isRed(piece) && tr>4)
-return false;
-
-return true;
 
 case "p":
 
@@ -524,20 +655,77 @@ return true;
 
 return false;
 
+case "k":
+
+if(Math.abs(dr)+Math.abs(dc)!==1)
+return false;
+
+if(isRed(piece)){
+
+return tr>=7 &&
+tc>=3 &&
+tc<=5;
+
+}else{
+
+return tr<=2 &&
+tc>=3 &&
+tc<=5;
+
+}
+
+case "a":
+
+if(
+Math.abs(dr)!==1 ||
+Math.abs(dc)!==1
+)
+return false;
+
+if(isRed(piece)){
+
+return tr>=7 &&
+tc>=3 &&
+tc<=5;
+
+}else{
+
+return tr<=2 &&
+tc>=3 &&
+tc<=5;
+
+}
+
+case "e":
+
+if(
+Math.abs(dr)!==2 ||
+Math.abs(dc)!==2
+)
+return false;
+
+if(isRed(piece) && tr<5)
+return false;
+
+if(!isRed(piece) && tr>4)
+return false;
+
+return true;
+
 case "c":
 
-if(sr !== tr && sc !== tc)
+if(sr!==tr && sc!==tc)
 return false;
 
 let count = 0;
 
-if(sr === tr){
+if(sr===tr){
 
 let step = dc>0 ? 1 : -1;
 
 for(let c=sc+step;c!==tc;c+=step){
 
-if(board[sr][c] !== "")
+if(board[sr][c]!=="")
 count++;
 
 }
@@ -548,14 +736,14 @@ let step = dr>0 ? 1 : -1;
 
 for(let r=sr+step;r!==tr;r+=step){
 
-if(board[r][sc] !== "")
+if(board[r][sc]!=="")
 count++;
 
 }
 
 }
 
-if(target === ""){
+if(target===""){
 
 return count===0;
 
@@ -600,24 +788,24 @@ p:100
 
 let score = 0;
 
-for(let r=0;r<ROWS;r++){
+for(let r=0;r<10;r++){
 
-for(let c=0;c<COLS;c++){
+for(let c=0;c<9;c++){
 
 const piece = board[r][c];
 
 if(piece){
 
-const value =
+let val =
 values[piece.toLowerCase()] || 0;
 
 if(isRed(piece)){
 
-score += value;
+score += val;
 
 }else{
 
-score -= value;
+score -= val;
 
 }
 
@@ -637,9 +825,9 @@ function getAllMoves(side){
 
 let moves = [];
 
-for(let r=0;r<ROWS;r++){
+for(let r=0;r<10;r++){
 
-for(let c=0;c<COLS;c++){
+for(let c=0;c<9;c++){
 
 const piece = board[r][c];
 
@@ -651,9 +839,9 @@ continue;
 if(side==="black" && isRed(piece))
 continue;
 
-for(let tr=0;tr<ROWS;tr++){
+for(let tr=0;tr<10;tr++){
 
-for(let tc=0;tc<COLS;tc++){
+for(let tc=0;tc<9;tc++){
 
 if(isValidMove(r,c,tr,tc)){
 
@@ -692,7 +880,8 @@ const moves = getAllMoves(turn);
 
 for(let move of moves){
 
-const backup = board[move.tr][move.tc];
+const backup =
+board[move.tr][move.tc];
 
 board[move.tr][move.tc] =
 board[move.sr][move.sc];
@@ -704,7 +893,8 @@ let score = evaluateBoard();
 board[move.sr][move.sc] =
 board[move.tr][move.tc];
 
-board[move.tr][move.tc] = backup;
+board[move.tr][move.tc] =
+backup;
 
 if(score > bestScore){
 
@@ -727,7 +917,7 @@ bestMove.tr,
 bestMove.tc
 );
 
-renderBoard();
+renderPieces();
 
 syncGame();
 
@@ -746,14 +936,14 @@ function checkWinner(){
 let redKing = false;
 let blackKing = false;
 
-for(let r=0;r<ROWS;r++){
+for(let r=0;r<10;r++){
 
-for(let c=0;c<COLS;c++){
+for(let c=0;c<9;c++){
 
-if(board[r][c] === "K")
+if(board[r][c]==="K")
 redKing = true;
 
-if(board[r][c] === "k")
+if(board[r][c]==="k")
 blackKing = true;
 
 }
@@ -845,7 +1035,7 @@ board = data.board;
 
 turn = data.turn;
 
-renderBoard();
+renderPieces();
 
 updateTurn();
 
@@ -870,13 +1060,15 @@ function startGame(){
 document.getElementById("menu")
 .style.display = "none";
 
-document.getElementById("board")
+document.getElementById("boardContainer")
 .style.display = "block";
 
 document.getElementById("gameInfo")
 .style.display = "block";
 
-renderBoard();
+drawBoard();
+
+renderPieces();
 
 updateTurn();
 
