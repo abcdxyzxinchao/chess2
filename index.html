@@ -2,13 +2,13 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cờ Tướng Online P2P</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cờ Tướng Online AI</title>
 
 <style>
 body{
     margin:0;
-    background:#1e1f22;
+    background:#1f2125;
     color:white;
     font-family:Arial;
     display:flex;
@@ -20,20 +20,11 @@ body{
 
 #menu{
     width:95%;
-    max-width:400px;
+    max-width:420px;
     background:#2b2d31;
     padding:20px;
     border-radius:12px;
     text-align:center;
-}
-
-button{
-    border:none;
-    padding:12px;
-    border-radius:8px;
-    margin-top:10px;
-    cursor:pointer;
-    font-weight:bold;
 }
 
 input{
@@ -45,16 +36,25 @@ input{
     font-size:16px;
 }
 
+button{
+    border:none;
+    padding:12px;
+    border-radius:8px;
+    margin-top:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
 #createBtn{
+    width:100%;
     background:#2ecc71;
     color:white;
-    width:100%;
 }
 
 #joinBtn{
+    width:100%;
     background:#3498db;
     color:white;
-    width:100%;
 }
 
 #status{
@@ -63,9 +63,8 @@ input{
 }
 
 #board{
-    margin-top:15px;
     display:none;
-    position:relative;
+    margin-top:10px;
 }
 
 .row{
@@ -73,46 +72,40 @@ input{
 }
 
 .cell{
-    width:42px;
-    height:42px;
-    border:1px solid #d4a373;
+    width:44px;
+    height:44px;
     background:#f5deb3;
+    border:1px solid #8b5a2b;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:22px;
+    font-size:24px;
+    font-weight:bold;
     cursor:pointer;
     user-select:none;
-    position:relative;
 }
 
 .cell.selected{
     background:#f1c40f;
 }
 
-.cell.move{
-    background:#2ecc71;
-}
-
 .red{
     color:#e74c3c;
-    font-weight:bold;
 }
 
 .black{
     color:#111;
-    font-weight:bold;
 }
 
 #gameInfo{
     display:none;
-    text-align:center;
     margin-top:15px;
+    text-align:center;
 }
 
 #turn{
-    margin-bottom:10px;
     font-size:18px;
+    margin-bottom:10px;
 }
 
 #autoBtn{
@@ -129,22 +122,27 @@ input{
 <body>
 
 <div id="menu">
-    <h2>♟️ Cờ Tướng Online</h2>
 
-    <button id="createBtn">➕ Tạo phòng</button>
+<h2>♟️ Cờ Tướng Online</h2>
 
-    <input id="roomInput" placeholder="Nhập mã phòng">
+<button id="createBtn">➕ Tạo phòng</button>
 
-    <button id="joinBtn">🔗 Vào phòng</button>
+<input id="roomInput" placeholder="Nhập mã phòng">
 
-    <div id="status">Chưa kết nối</div>
+<button id="joinBtn">🔗 Vào phòng</button>
+
+<div id="status">Chưa kết nối</div>
+
 </div>
 
 <div id="board"></div>
 
 <div id="gameInfo">
-    <div id="turn"></div>
-    <button id="autoBtn">🤖 AI: TẮT</button>
+
+<div id="turn"></div>
+
+<button id="autoBtn">🤖 AI: TẮT</button>
+
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -163,24 +161,28 @@ let autoAI = false;
 
 let selected = null;
 
+let turn = "red";
+
 let board = [];
 
-const PIECES = {
-    r:"車",
-    h:"馬",
-    e:"象",
-    a:"士",
-    k:"將",
-    c:"炮",
-    p:"卒",
+const pieces = {
 
-    R:"車",
-    H:"馬",
-    E:"相",
-    A:"仕",
-    K:"帥",
-    C:"炮",
-    P:"兵"
+r:"車",
+h:"馬",
+e:"象",
+a:"士",
+k:"將",
+c:"炮",
+p:"卒",
+
+R:"車",
+H:"馬",
+E:"相",
+A:"仕",
+K:"帥",
+C:"炮",
+P:"兵"
+
 };
 
 function initBoard(){
@@ -212,56 +214,85 @@ boardDiv.innerHTML = "";
 
 for(let r=0;r<ROWS;r++){
 
-    const rowDiv = document.createElement("div");
-    rowDiv.className = "row";
+const row = document.createElement("div");
 
-    for(let c=0;c<COLS;c++){
+row.className = "row";
 
-        const cell = document.createElement("div");
+for(let c=0;c<COLS;c++){
 
-        cell.className = "cell";
+const cell = document.createElement("div");
 
-        cell.dataset.row = r;
-        cell.dataset.col = c;
+cell.className = "cell";
 
-        const piece = board[r][c];
+cell.dataset.r = r;
+cell.dataset.c = c;
 
-        if(piece){
+const piece = board[r][c];
 
-            cell.innerHTML = PIECES[piece];
+if(piece){
 
-            if(piece === piece.toUpperCase()){
-                cell.classList.add("red");
-            }else{
-                cell.classList.add("black");
-            }
+cell.innerHTML = pieces[piece];
 
-        }
+if(piece === piece.toUpperCase()){
 
-        cell.onclick = ()=>handleClick(r,c);
+cell.classList.add("red");
 
-        rowDiv.appendChild(cell);
+}else{
 
-    }
+cell.classList.add("black");
 
-    boardDiv.appendChild(rowDiv);
+}
+
+}
+
+cell.onclick = ()=>clickCell(r,c);
+
+row.appendChild(cell);
+
+}
+
+boardDiv.appendChild(row);
+
+}
+
+if(selected){
+
+const index = selected.r * COLS + selected.c;
+
+document.querySelectorAll(".cell")[index]
+.classList.add("selected");
 
 }
 
 }
 
 function isRed(piece){
-    return piece && piece === piece.toUpperCase();
+
+return piece &&
+piece === piece.toUpperCase();
+
 }
 
-function currentTurn(){
+function isMyTurn(){
 
-    return turn;
+return (
+(mySide === "red" && turn === "red") ||
+(mySide === "black" && turn === "black")
+);
+
 }
 
-let turn = "red";
+function updateTurn(){
 
-function handleClick(r,c){
+document.getElementById("turn")
+.innerHTML =
+isMyTurn()
+? "👉 Lượt của bạn"
+: "⏳ Đợi đối thủ";
+
+}
+
+function clickCell(r,c){
 
 if(!isMyTurn()) return;
 
@@ -269,50 +300,51 @@ const piece = board[r][c];
 
 if(selected){
 
-    const move = isValidMove(selected.r,selected.c,r,c);
+if(isValidMove(selected.r,selected.c,r,c)){
 
-    if(move){
+movePiece(selected.r,selected.c,r,c);
 
-        movePiece(selected.r,selected.c,r,c);
+selected = null;
 
-        selected = null;
+renderBoard();
 
-        renderBoard();
+syncGame();
 
-        syncGame();
+switchTurn();
 
-        switchTurn();
+checkWinner();
 
-        aiMove();
+setTimeout(()=>{
+aiMove();
+},200);
 
-        return;
-    }
+return;
+
+}else{
+
+selected = null;
+
+}
 
 }
 
 if(piece){
 
-    if(turn === "red" && isRed(piece)){
-        selected = {r,c};
-    }
+if(turn === "red" && isRed(piece)){
 
-    if(turn === "black" && !isRed(piece)){
-        selected = {r,c};
-    }
+selected = {r,c};
+
+}
+
+if(turn === "black" && !isRed(piece)){
+
+selected = {r,c};
+
+}
 
 }
 
 renderBoard();
-
-if(selected){
-
-    const index =
-    selected.r * COLS + selected.c;
-
-    document.querySelectorAll(".cell")[index]
-    .classList.add("selected");
-
-}
 
 }
 
@@ -326,42 +358,26 @@ board[sr][sc] = "";
 
 function switchTurn(){
 
-turn = turn === "red"
+turn =
+turn === "red"
 ? "black"
 : "red";
 
-updateStatus();
-
-}
-
-function isMyTurn(){
-
-return (
-(mySide === "red" && turn === "red") ||
-(mySide === "black" && turn === "black")
-);
-
-}
-
-function updateStatus(){
-
-document.getElementById("turn").innerHTML =
-isMyTurn()
-? "👉 Lượt của bạn"
-: "⏳ Đợi đối thủ";
+updateTurn();
 
 }
 
 function isInside(r,c){
 
-return r >=0 && r < ROWS &&
-c >=0 && c < COLS;
+return r>=0 && r<ROWS &&
+c>=0 && c<COLS;
 
 }
 
 function isValidMove(sr,sc,tr,tc){
 
-if(!isInside(tr,tc)) return false;
+if(!isInside(tr,tc))
+return false;
 
 const piece = board[sr][sc];
 
@@ -369,9 +385,8 @@ const target = board[tr][tc];
 
 if(target){
 
-if(isRed(piece) === isRed(target)){
-    return false;
-}
+if(isRed(piece) === isRed(target))
+return false;
 
 }
 
@@ -387,7 +402,7 @@ return false;
 
 if(sr === tr){
 
-let step = dc > 0 ? 1 : -1;
+let step = dc>0 ? 1 : -1;
 
 for(let c=sc+step;c!==tc;c+=step){
 
@@ -398,7 +413,7 @@ return false;
 
 }else{
 
-let step = dr > 0 ? 1 : -1;
+let step = dr>0 ? 1 : -1;
 
 for(let r=sr+step;r!==tr;r+=step){
 
@@ -417,7 +432,9 @@ if(
 (Math.abs(dr)===2 && Math.abs(dc)===1) ||
 (Math.abs(dr)===1 && Math.abs(dc)===2)
 ){
+
 return true;
+
 }
 
 return false;
@@ -429,24 +446,55 @@ return false;
 
 if(isRed(piece)){
 
-return tr >=7 && tc>=3 && tc<=5;
+return tr>=7 && tc>=3 && tc<=5;
 
 }else{
 
-return tr <=2 && tc>=3 && tc<=5;
+return tr<=2 && tc>=3 && tc<=5;
 
 }
+
+case "a":
+
+if(Math.abs(dr)!==1 ||
+Math.abs(dc)!==1)
+return false;
+
+if(isRed(piece)){
+
+return tr>=7 && tc>=3 && tc<=5;
+
+}else{
+
+return tr<=2 && tc>=3 && tc<=5;
+
+}
+
+case "e":
+
+if(Math.abs(dr)!==2 ||
+Math.abs(dc)!==2)
+return false;
+
+if(isRed(piece) && tr<5)
+return false;
+
+if(!isRed(piece) && tr>4)
+return false;
+
+return true;
 
 case "p":
 
 if(isRed(piece)){
 
-if(sr <=4){
+if(sr<=4){
 
 if(
 (dr===-1 && dc===0) ||
 (dr===0 && Math.abs(dc)===1)
-) return true;
+)
+return true;
 
 }else{
 
@@ -457,12 +505,13 @@ return true;
 
 }else{
 
-if(sr >=5){
+if(sr>=5){
 
 if(
 (dr===1 && dc===0) ||
 (dr===0 && Math.abs(dc)===1)
-) return true;
+)
+return true;
 
 }else{
 
@@ -484,7 +533,7 @@ let count = 0;
 
 if(sr === tr){
 
-let step = dc > 0 ? 1 : -1;
+let step = dc>0 ? 1 : -1;
 
 for(let c=sc+step;c!==tc;c+=step){
 
@@ -495,7 +544,7 @@ count++;
 
 }else{
 
-let step = dr > 0 ? 1 : -1;
+let step = dr>0 ? 1 : -1;
 
 for(let r=sr+step;r!==tr;r+=step){
 
@@ -508,41 +557,13 @@ count++;
 
 if(target === ""){
 
-return count === 0;
+return count===0;
 
 }else{
 
-return count === 1;
+return count===1;
 
 }
-
-case "a":
-
-if(Math.abs(dr)!==1 || Math.abs(dc)!==1)
-return false;
-
-if(isRed(piece)){
-
-return tr >=7 && tc>=3 && tc<=5;
-
-}else{
-
-return tr <=2 && tc>=3 && tc<=5;
-
-}
-
-case "e":
-
-if(Math.abs(dr)!==2 || Math.abs(dc)!==2)
-return false;
-
-if(isRed(piece) && tr <5)
-return false;
-
-if(!isRed(piece) && tr >4)
-return false;
-
-return true;
 
 }
 
@@ -555,7 +576,6 @@ function syncGame(){
 if(conn && conn.open){
 
 conn.send({
-type:"sync",
 board,
 turn
 });
@@ -564,7 +584,56 @@ turn
 
 }
 
-function randomMove(){
+function evaluateBoard(){
+
+const values = {
+
+k:10000,
+r:900,
+c:500,
+h:400,
+e:200,
+a:200,
+p:100
+
+};
+
+let score = 0;
+
+for(let r=0;r<ROWS;r++){
+
+for(let c=0;c<COLS;c++){
+
+const piece = board[r][c];
+
+if(piece){
+
+const value =
+values[piece.toLowerCase()] || 0;
+
+if(isRed(piece)){
+
+score += value;
+
+}else{
+
+score -= value;
+
+}
+
+}
+
+}
+
+}
+
+return turn==="red"
+? score
+: -score;
+
+}
+
+function getAllMoves(side){
 
 let moves = [];
 
@@ -576,10 +645,10 @@ const piece = board[r][c];
 
 if(!piece) continue;
 
-if(turn==="red" && !isRed(piece))
+if(side==="red" && !isRed(piece))
 continue;
 
-if(turn==="black" && isRed(piece))
+if(side==="black" && isRed(piece))
 continue;
 
 for(let tr=0;tr<ROWS;tr++){
@@ -605,12 +674,7 @@ tc
 
 }
 
-if(moves.length===0)
-return null;
-
-return moves[
-Math.floor(Math.random()*moves.length)
-];
+return moves;
 
 }
 
@@ -620,17 +684,47 @@ if(!autoAI) return;
 
 if(!isMyTurn()) return;
 
+let bestScore = -999999;
+
+let bestMove = null;
+
+const moves = getAllMoves(turn);
+
+for(let move of moves){
+
+const backup = board[move.tr][move.tc];
+
+board[move.tr][move.tc] =
+board[move.sr][move.sc];
+
+board[move.sr][move.sc] = "";
+
+let score = evaluateBoard();
+
+board[move.sr][move.sc] =
+board[move.tr][move.tc];
+
+board[move.tr][move.tc] = backup;
+
+if(score > bestScore){
+
+bestScore = score;
+
+bestMove = move;
+
+}
+
+}
+
+if(bestMove){
+
 setTimeout(()=>{
 
-const move = randomMove();
-
-if(move){
-
 movePiece(
-move.sr,
-move.sc,
-move.tr,
-move.tc
+bestMove.sr,
+bestMove.sc,
+bestMove.tr,
+bestMove.tc
 );
 
 renderBoard();
@@ -639,18 +733,59 @@ syncGame();
 
 switchTurn();
 
-}
+checkWinner();
 
 },500);
 
 }
 
+}
+
+function checkWinner(){
+
+let redKing = false;
+let blackKing = false;
+
+for(let r=0;r<ROWS;r++){
+
+for(let c=0;c<COLS;c++){
+
+if(board[r][c] === "K")
+redKing = true;
+
+if(board[r][c] === "k")
+blackKing = true;
+
+}
+
+}
+
+if(!redKing){
+
+alert("⚫ Đen thắng");
+
+location.reload();
+
+}
+
+if(!blackKing){
+
+alert("🔴 Đỏ thắng");
+
+location.reload();
+
+}
+
+}
+
 function createRoom(){
 
-const id =
-Math.floor(10000+Math.random()*90000).toString();
+const roomId =
+Math.floor(
+10000 + Math.random()*90000
+).toString();
 
-peer = new Peer(id);
+peer = new Peer(roomId);
 
 mySide = "red";
 
@@ -659,7 +794,9 @@ peer.on("open",(id)=>{
 document.getElementById("status")
 .innerHTML =
 `🎟️ Mã phòng:
-<b style="font-size:24px;color:#2ecc71">${id}</b>`;
+<b style="font-size:24px;color:#2ecc71">
+${id}
+</b>`;
 
 });
 
@@ -710,9 +847,11 @@ turn = data.turn;
 
 renderBoard();
 
-updateStatus();
+updateTurn();
 
+setTimeout(()=>{
 aiMove();
+},200);
 
 });
 
@@ -739,9 +878,11 @@ document.getElementById("gameInfo")
 
 renderBoard();
 
-updateStatus();
+updateTurn();
 
+setTimeout(()=>{
 aiMove();
+},300);
 
 }
 
@@ -774,7 +915,9 @@ this.classList.add("active");
 
 this.innerHTML = "🤖 AI: BẬT";
 
+setTimeout(()=>{
 aiMove();
+},300);
 
 }else{
 
